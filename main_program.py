@@ -84,8 +84,8 @@ def rotate_image(image, angle):
     rotated = cv2.warpAffine(image, M, (w, h), borderValue=(255,255,255))
     return rotated
 
-def save_file(filename, img_rotated):
-    filename = str(filename.split(".")[0]) + "_rotated.jpg"
+def save_file(filename, type, img_rotated):
+    filename = "output/"+str(filename.split(".")[0]) +"_"+type+ "_rotated.jpg"
     cv2.imwrite(filename, img_rotated)
     return filename
 
@@ -95,13 +95,13 @@ hough_angle = angle_detection_hough_line(image)
 print(f'Hough angle = {hough_angle}')
 
 rotated_image = rotate_image(image, angle=hough_angle)
-rotated_image_filename = save_file(filename, rotated_image)
+rotated_image_filename = save_file(filename, 'hough', rotated_image)
 
 results = pytesseract.image_to_osd(rotated_image_filename)
 ocr_angle = re.search('(?<=Orientation in degrees: )\d+', results).group(0)
 print(f'OCR angle = {ocr_angle}')
 
 rotated_image = rotate_image(rotated_image_filename, angle=int(ocr_angle))
-rotated_image_filename = save_file(filename, rotated_image)
+rotated_image_filename = save_file(filename, 'ocr',  rotated_image)
 
 cv2.waitKey(0)
