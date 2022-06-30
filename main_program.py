@@ -1,13 +1,9 @@
 import cv2
-from PIL import Image
-from cv2 import imread
 from pdf2image import convert_from_path
 import numpy as np
 import math
 import pytesseract
 import re
-import glob
-import imutils
 
 pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
 
@@ -35,16 +31,19 @@ def rescaleFrame(frame, scale=0.75):
 
 def angle_detection_hough_line(image):
     image = cv2.imread(image)
-    image = rescaleFrame(image, 0.5)
+    # image = rescaleFrame(image, 0.5)
     # cv2.imshow('Image', image)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)   
+    cv2.imwrite(r'output/gray.jpg', gray)
     # cv2.imshow('Gray Image', gray) 
     _,binary = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+    cv2.imwrite(r'output/binary.jpg', binary)
     # cv2.imshow('Threshold', binary)
     kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
     opening = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel1)
     # cv2.imshow('Opening', opening)
     canny = cv2.Canny(binary, 50, 150, apertureSize=3)    
+    cv2.imwrite(r'output/canny.jpg', canny)
     # cv2.imshow('Canny Edge', canny)
     angles = []     
     lines = cv2.HoughLinesP(
@@ -58,12 +57,12 @@ def angle_detection_hough_line(image):
 
     for points in lines:
         x1,y1,x2,y2=points[0]
-        cv2.line(image,(x1,y1),(x2,y2),(0,255,0),2)
+        cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
         angle = math.atan2(y2 - y1, x2 - x1) 
         angle = round(math.degrees(angle), 1)
         # angle = angle if (angle>0) else angle + 90
         angles.append(angle)
-    
+    cv2.imwrite(r'output/hough.jpg', image)
     #cv2.imshow('Lines', image)
     count = {i: angles.count(i) for i in angles}
     hough_angle = list(count.keys())[list(count.values()).index(max(count.values()))]
