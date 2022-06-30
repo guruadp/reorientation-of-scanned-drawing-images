@@ -35,7 +35,7 @@ def rescaleFrame(frame, scale=0.75):
 def angle_detection_hough_line(image):
     image = cv2.imread(image)
     image = rescaleFrame(image, 0.5)
-    # cv2.imshow('Image', image)
+    cv2.imshow('Image', image)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)   
     # cv2.imshow('Gray Image', gray) 
     _,binary = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
@@ -68,29 +68,50 @@ def angle_detection_hough_line(image):
     hough_angle = list(count.keys())[list(count.values()).index(max(count.values()))]
     return hough_angle
 
+def angle_detection_ocr(image):
+    # gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    # rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # results = pytesseract.image_to_osd(filename+'.jpg')
+    # image = Image.fromarray(image)
+    results = pytesseract.image_to_osd(rgb)
+    # display the orientation information
+    ocr_angle = re.search('(?<=Orientation in degrees: )\d+', results).group(0)
+
+    ocr_angle = float(ocr_angle)
+    print(f'OCR angle = {ocr_angle}')
+
+def rotate_image(image, angle):
+    image = cv2.imread(image)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    (h, w) = image.shape[:2]
+    (cX, cY) = (w // 2, h // 2)
+
+    M = cv2.getRotationMatrix2D((cX, cY), angle, 1.0)
+    rotated = cv2.warpAffine(gray, M, (w, h), borderValue=(255,255,255))
+    return rotated
+
 def save_file(filename, img_rotated):
     filename = str(filename.split(".")[0]) + "_rotated.png"
     cv2.imwrite(filename, img_rotated)
 
 file = "sample.pdf"
+filename = file.split('.')[0]
 image = pdf_to_image(file)
 hough_angle = angle_detection_hough_line(image)
 print(f'Hough angle = {hough_angle}')
+rotated_image = rotate_image(image, angle=hough_angle)
+print('Shape - ', rotated_image.shape)
+# gray = cv2.cvtColor(rotate_image)
+# ocr_angle = angle_detection_ocr(filepath = filename)
 
-image = cv2.imread(image)
-gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-results = pytesseract.image_to_osd(file.split('.')[0]+'.jpg')
-# display the orientation information
-ocr_angle = re.search('(?<=Orientation in degrees: )\d+', results).group(0)
 
-ocr_angle = float(ocr_angle)
-print(f'OCR angle = {ocr_angle}')
-rotated = imutils.rotate_bound(image, angle=ocr_angle)
-cv2.imshow('OCR rotated', rotated)
-rotated = imutils.rotate_bound(image, angle=hough_angle*(-1))
-cv2.imshow('Hough rotated', rotated)
+# image1 = Image.fromarray(image)
+# rotated_image = image1.rotate(ocr_angle, fillcolor="white", expand=True)
+# rotated_image = np.array(rotated_image)
+# cv2.imshow('OCR rotated', rotated)
+# rotated = imutils.rotate_bound(image, angle=hough_angle*(-1))
+# cv2.imshow('Hough rotated', rotated)
 # rotated_image = cv2.rotate(image, rotateCode=) #image.rotate(ocr_angle, fillcolor="white", expand=True)
-rotated_image = np.array(rotated)
-save_file(file, rotated_image)
+# rotated_image = np.array(rotated)
+# save_file(file, rotated_image)
 cv2.waitKey(0)
